@@ -19,12 +19,12 @@ data = pd.read_csv('attribute_list.csv', skiprows=1)
 data.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
 data.drop(data.columns[0], axis=1, inplace=True)
 
-with open("mouth_images_numpy.txt", "rb") as fp:  # Unpickling
+with open("mouth_images.txt", "rb") as fp:  # Unpickling
     #images = np.stack(pickle.load(fp), axis=0)
     #images = np.array(pickle.load(fp))
     images = np.array(pickle.load(fp))
 
-y = np.array([0 if val == -1 else 1 for i, val in enumerate(data["smiling"]) if i + 1 in constants.images])
+y = np.array([0 if val == -1 else 1 for i, val in enumerate(data["young"]) if i + 1 in constants.images])
 x_train, x_test, y_train, y_test = train_test_split(images, y, test_size=0.3)
 
 num_classes = 2

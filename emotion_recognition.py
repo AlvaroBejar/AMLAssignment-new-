@@ -26,16 +26,16 @@ with open("mouth_images_numpy.txt", "wb") as fp:  # Pickling
 '''
 
 # Reads attributes to train supervised model
-data = pd.read_csv('attribute_list.csv', skiprows=1)
-data.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
-data.drop(data.columns[0], axis=1, inplace=True)
+labels = pd.read_csv('attribute_list.csv', skiprows=1)
+labels.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
+labels.drop(labels.columns[0], axis=1, inplace=True)
 
 # Load data containing mouth features
 with open("mouth_images_numpy.txt", "rb") as fp:  # Unpickling
     images = np.array(pickle.load(fp))
 
 # Puts label data into correct format
-y = np.array([0 if val == -1 else 1 for i, val in enumerate(data["smiling"]) if i + 1 in constants.images])
+y = np.array([0 if val == -1 else 1 for i, val in enumerate(labels["smiling"]) if i + 1 in constants.images])
 x_train, x_test, y_train, y_test = train_test_split(images, y, test_size=0.3)
 
 # Reformats data from 3d to 2d for x_train and x_test
@@ -45,7 +45,7 @@ x_train_flattened = x_train.reshape((nsamples_train, nx_train * ny_train))
 nsamples_test, nx_test, ny_test = x_test.shape
 x_test_flattened = x_test.reshape((nsamples_test, nx_test * ny_test))
 
-clf = svm.SVC(kernel='sigmoid')  # Creates SVM to train
+clf = svm.SVC(kernel='rbf')  # Creates SVM to train
 clf.fit(x_train_flattened, y_train)
 predicted = clf.predict(x_test_flattened)
 print(str(accuracy_score(y_test, predicted)))

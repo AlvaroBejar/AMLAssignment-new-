@@ -5,3 +5,8 @@
 /maybe_trash.py
 /mouth_images_numpy.txt
 /dataset/
+/face_images_numpy.txt
+/face_images.txt
+/age_recognition_ratios.txt
+/.idea/vcs.xml
+/.DS_Store

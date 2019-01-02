@@ -10,4 +10,6 @@
 /age_recognition_ratios.txt
 .DS_Store.DS_Store
 .idea
-.idea
+/cartoon_mean.txt
+/all_images.txt
+/edgeness_values.txt

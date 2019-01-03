@@ -23,7 +23,7 @@ labels.drop(labels.columns[0], axis=1, inplace=True)
 #labels.hist(column='hair_color')
 #plt.show()
 
-with open("all_images.txt", "rb") as fp:  # Unpickling
+with open("saved_variables/all_images.txt", "rb") as fp:  # Unpickling
     images = np.array(pickle.load(fp))
 
 y = np.array([0 if val == -1 else 1 for i, val in enumerate(labels["hair_color"]) if i + 1 in constants.images])

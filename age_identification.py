@@ -10,13 +10,15 @@ import PIL
 from operator import itemgetter
 from PIL import Image, ImageDraw
 import math
+import cv2
 
-'''
+
 # Reads attributes to train supervised model
 labels = pd.read_csv('attribute_list.csv', skiprows=1)
 labels.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
 labels.drop(labels.columns[0], axis=1, inplace=True)
 
+'''
 def calculate_distance(p1, p2):
     return math.hypot(p2[0] - p1[0], p2[1] - p1[1])
 
@@ -95,25 +97,72 @@ for file_no in constants.images:
     # Ratio 7: D(left_side, right_side)/D(top_of_head, chin)
     r7 = calculate_distance(right_side, left_side)/calculate_distance(top_of_head, chin)
 
-    ratios.append([r1, r2, r3, r4, r5, r6, r7, labels["hair_color"][file_no - 1]])
+    # Get wrinkle areas
+    distance_between_eyes = calculate_distance(right_eye, left_eye)
 
-with open("age_recognition_ratios.txt", "wb") as fp:  # Pickling
+    # Forehead area wrinkles
+    forehead_top_left = (middle_of_eyes[0] - (2 / 3) * distance_between_eyes, middle_of_eyes[1] - (distance_between_eyes * 0.75) - (1 / 3) * distance_between_eyes)
+    forehead_bottom_right = (middle_of_eyes[0] + (2 / 3) * distance_between_eyes, middle_of_eyes[1] - (distance_between_eyes * 0.75))
+    forehead_area = image[int(forehead_top_left[1]):int(forehead_bottom_right[1]), int(forehead_top_left[0]):int(forehead_bottom_right[0])]
+    forehead_edges = cv2.Canny(forehead_area, 100, 200)
+    forehead_wrinkle_density = np.count_nonzero(forehead_edges) / (forehead_edges.shape[0] * forehead_edges.shape[1])
+
+    # Get wrinkles at right and left of eyes, right eye is actually left based on face, but naming has been made on portrait face
+    right_wrinkles_top_left = (right_eye[0] + (5/12) * distance_between_eyes, right_eye[1])
+    right_wrinkles_bottom_right = (right_eye[0] + (5/12) * distance_between_eyes + (1/6) * distance_between_eyes, right_eye[1] + (1/4) * distance_between_eyes)
+    right_eye_wrinkle_area = image[int(right_wrinkles_top_left[1]):int(right_wrinkles_bottom_right[1]), int(right_wrinkles_top_left[0]):int(right_wrinkles_bottom_right[0])]
+    right_eye_wrinkle_edges = cv2.Canny(right_eye_wrinkle_area, 100, 200)
+    right_eye_wrinkle_density = np.count_nonzero(right_eye_wrinkle_edges) / (right_eye_wrinkle_edges.shape[0] * right_eye_wrinkle_edges.shape[1])
+
+    left_wrinkles_top_left = (left_eye[0] - (5/12) * distance_between_eyes - (1/6) * distance_between_eyes, left_eye[1])
+    left_wrinkles_bottom_right = (left_eye[0] - (5/12) * distance_between_eyes, left_eye[1] + (1/4) * distance_between_eyes)
+    left_eye_wrinkle_area = image[int(left_wrinkles_top_left[1]):int(left_wrinkles_bottom_right[1]), int(left_wrinkles_top_left[0]):int(left_wrinkles_bottom_right[0])]
+    left_eye_wrinkle_edges = cv2.Canny(left_eye_wrinkle_area, 100, 200)
+    left_eye_wrinkle_density = np.count_nonzero(left_eye_wrinkle_edges) / (left_eye_wrinkle_edges.shape[0] * left_eye_wrinkle_edges.shape[1])
+    average_eye_wrinkle_density = np.mean([right_eye_wrinkle_density, left_eye_wrinkle_density])
+
+    # Get cheekbone areas for wrinkles, naming is inverted as with eyes
+    right_cheek_top_left = (right_eye[0] - (1/12) * distance_between_eyes, right_eye[1] + (1/8) * distance_between_eyes)
+    right_cheek_bottom_right = (right_eye[0] + (1/12) * distance_between_eyes, right_eye[1] + (1/8) * distance_between_eyes + (1/4) * distance_between_eyes)
+    right_cheek_wrinkle_area = image[int(right_cheek_top_left[1]):int(right_cheek_bottom_right[1]), int(right_cheek_top_left[0]):int(right_cheek_bottom_right[0])]
+    right_cheek_wrinkle_edges = cv2.Canny(right_cheek_wrinkle_area, 100, 200)
+    right_cheek_wrinkle_density = np.count_nonzero(right_cheek_wrinkle_edges) / (right_cheek_wrinkle_edges.shape[0] * right_cheek_wrinkle_edges.shape[1])
+
+    left_cheek_top_left = (left_eye[0] - (1/12) * distance_between_eyes, left_eye[1] + (1/8) * distance_between_eyes)
+    left_cheek_bottom_right = (left_eye[0] + (1/12) * distance_between_eyes, left_eye[1] + (1/8) * distance_between_eyes + (1/4) * distance_between_eyes)
+    left_cheek_wrinkle_area = image[int(left_cheek_top_left[1]):int(left_cheek_bottom_right[1]), int(left_cheek_top_left[0]):int(left_cheek_bottom_right[0])]
+    left_cheek_wrinkle_edges = cv2.Canny(left_eye_wrinkle_area, 100, 200)
+    left_cheek_wrinkle_density = np.count_nonzero(left_cheek_wrinkle_edges) / (left_cheek_wrinkle_edges.shape[0] * left_cheek_wrinkle_edges.shape[1])
+    average_cheek_wrinkle_density = np.mean([right_cheek_wrinkle_density, left_cheek_wrinkle_density])
+
+    #labels["hair_color"][file_no - 1], append hair color to array
+
+    ratios.append([r1, r2, r3, r4, r5, r6, r7, forehead_wrinkle_density, average_eye_wrinkle_density, average_cheek_wrinkle_density])
+
+
+with open("age_recognition_with_wrinkles.txt", "wb") as fp:  # Pickling
     pickle.dump(ratios, fp)
 '''
 
 # !!!!!! IMPLEMENT WRINKLE ANALYSIS USING EDGE DETECTION !!!!!!
 # COMPARE ONLY HAIR WITH FACE DISTANCES WITH WRINKLE ANALYSIS WITH MIX
 
-with open("age_recognition_ratios.txt", "rb") as fp:
+with open("age_recognition_with_wrinkles.txt", "rb") as fp:
     images = np.array(pickle.load(fp))
 
 # Reads attributes to train supervised model
-labels = pd.read_csv('attribute_list.csv', skiprows=1)
+labels = pd.read_csv('saved_variables/attribute_list.csv', skiprows=1)
 labels.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
 labels.drop(labels.columns[0], axis=1, inplace=True)
 y = np.array([0 if val == -1 else 1 for i, val in enumerate(labels["young"]) if i + 1 in constants.images])
 #x = np.array([[val] for i, val in enumerate(labels["hair_color"]) if i + 1 in constants.images])
 x_train, x_test, y_train, y_test = train_test_split(images, y, test_size=0.3)
+
+from sklearn.decomposition import PCA
+pca = PCA()
+principalComponents = pca.fit_transform(images)
+print(pca.explained_variance_)
+print(pca.explained_variance_ratio_[7])
 
 clf = svm.SVC(kernel='sigmoid')  # Creates SVM to train
 clf.fit(x_train, y_train)

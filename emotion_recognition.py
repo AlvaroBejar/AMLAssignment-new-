@@ -31,7 +31,7 @@ labels.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
 labels.drop(labels.columns[0], axis=1, inplace=True)
 
 # Load data containing mouth features
-with open("mouth_images_numpy.txt", "rb") as fp:  # Unpickling
+with open("saved_variables/mouth_images_numpy.txt", "rb") as fp:  # Unpickling
     images = np.array(pickle.load(fp))
 
 # Puts label data into correct format
@@ -45,7 +45,7 @@ x_train_flattened = x_train.reshape((nsamples_train, nx_train * ny_train))
 nsamples_test, nx_test, ny_test = x_test.shape
 x_test_flattened = x_test.reshape((nsamples_test, nx_test * ny_test))
 
-clf = svm.SVC(kernel='rbf')  # Creates SVM to train
+clf = svm.SVC(kernel='sigmoid')  # Creates SVM to train
 clf.fit(x_train_flattened, y_train)
 predicted = clf.predict(x_test_flattened)
 print(str(accuracy_score(y_test, predicted)))

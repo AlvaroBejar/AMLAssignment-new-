@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import pickle
+import matplotlib.pyplot as plt
 
 '''
 file_dir = ["dataset/", ".png"]
@@ -30,7 +31,7 @@ with open("cartoon_mean.txt", "wb") as fp:  # Pickling
 '''
 
 # Load data containing mouth features
-with open("cartoon_mean.txt", "rb") as fp:  # Unpickling
+with open("saved_variables/cartoon_mean.txt", "rb") as fp:  # Unpickling
     images = np.array(pickle.load(fp))
 
 # Reads attributes to train supervised model

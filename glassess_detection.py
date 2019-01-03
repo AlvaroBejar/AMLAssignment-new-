@@ -20,6 +20,8 @@ from sklearn import svm
 def calculate_distance(p1, p2):
     return math.hypot(p2[0] - p1[0], p2[1] - p1[1])
 
+def calculate_edgeness(image_area)
+
 file_dir = ["dataset/", ".png"]
 images = []
 edgeness = []
@@ -88,7 +90,7 @@ with open("edgeness_values.txt", "wb") as fp:  # Pickling
     pickle.dump(edgeness, fp)
 '''
 
-with open("edgeness_values.txt", "rb") as fp:
+with open("saved_variables/edgeness_values.txt", "rb") as fp:
     edgeness = pickle.load(fp)
 
 # Reads attribues to train supervised model

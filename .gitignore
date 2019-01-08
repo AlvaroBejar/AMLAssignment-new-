@@ -14,3 +14,7 @@
 /all_images.txt
 /edgeness_values.txt
 /saved_variables/
+/testing_dataset/
+/shape_predictor_68_face_landmarks.dat
+/my_model.h5
+/task_C.py

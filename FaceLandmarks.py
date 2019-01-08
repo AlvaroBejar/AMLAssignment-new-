@@ -3,25 +3,52 @@ from operator import itemgetter
 import numpy as np
 import math
 import cv2
+import matplotlib.pyplot as plt
+import itertools
 
 def calculate_distance(p1, p2):
     return math.hypot(p2[0] - p1[0], p2[1] - p1[1])
 
 class FaceLandmarks:
+
     def __init__(self, file_name):
         self.image = face_recognition.load_image_file(file_name)
         self.face_locations = face_recognition.face_locations(self.image)
         self.face_landmarks_list = face_recognition.face_landmarks(self.image)[0]
-        self.right_eye = ((min(self.face_landmarks_list["right_eye"], key=itemgetter(0))[0] + max(self.face_landmarks_list["right_eye"], key=itemgetter(0))[0]) / 2, max(self.face_landmarks_list["right_eye"], key=itemgetter(0))[1])
-        self.left_eye = ((min(self.face_landmarks_list["left_eye"], key=itemgetter(0))[0] + max(self.face_landmarks_list["left_eye"], key=itemgetter(0))[0]) / 2, min(self.face_landmarks_list["left_eye"], key=itemgetter(0))[1])
-        self.nose_tip = max(self.face_landmarks_list["nose_tip"], key=itemgetter(1))
-        self.lip = sorted(self.face_landmarks_list["bottom_lip"], key=lambda tup: tup[0])[int(len(self.face_landmarks_list["bottom_lip"]) / 2)]
-        self.chin = max(self.face_landmarks_list["chin"], key=itemgetter(1))
-        self.middle_of_eyes = [(self.left_eye[0] + self.right_eye[0]) / 2, (self.left_eye[1] + self.right_eye[1]) / 2]
-        self.top_of_head = [self.middle_of_eyes[0], self.face_locations[0][3]]
+        self.right_eye = self.get_right_eye()
+        self.left_eye = self.get_left_eye()
+        self.nose_tip = self.get_nose_tip()
+        self.lip = self.get_lip()
+        self.chin = self.get_chin()
+        self.middle_of_eyes = self.get_middle_of_eyes()
+        self.top_of_head = self.get_top_of_head()
         self.right_face_side = self.get_face_sides()[0]
         self.left_face_side = self.get_face_sides()[1]
         self.distance_between_eyes = calculate_distance(self.right_eye, self.left_eye)
+
+    def get_right_eye(self):
+        right_eye = self.face_landmarks_list["right_eye"]
+        return ((min(right_eye, key=itemgetter(0))[0] + max(right_eye, key=itemgetter(0))[0]) / 2, max(right_eye, key=itemgetter(0))[1])
+
+    def get_left_eye(self):
+        left_eye = self.face_landmarks_list["left_eye"]
+        return ((min(left_eye, key=itemgetter(0))[0] + max(left_eye, key=itemgetter(0))[0]) / 2, min(left_eye, key=itemgetter(0))[1])
+
+    def get_nose_tip(self):
+        return max(self.face_landmarks_list["nose_tip"], key=itemgetter(1))
+
+    def get_lip(self):
+        bottom_lip = self.face_landmarks_list["bottom_lip"]
+        return sorted(bottom_lip, key=lambda tup: tup[0])[int(len(bottom_lip) / 2)]
+
+    def get_chin(self):
+        return max(self.face_landmarks_list["chin"], key=itemgetter(1))
+
+    def get_middle_of_eyes(self):
+        return ((self.left_eye[0] + self.right_eye[0]) / 2, (self.left_eye[1] + self.right_eye[1]) / 2)
+
+    def get_top_of_head(self):
+        return (self.middle_of_eyes[0], self.face_locations[0][3])
 
     def get_face_sides(self):
         # Get coordinates for sides of face based on height of lip
@@ -77,17 +104,12 @@ class FaceLandmarks:
         forehead_edges = cv2.Canny(forehead_area, 100, 200)
         forehead_wrinkle_density = np.count_nonzero(forehead_edges) / (forehead_edges.shape[0] * forehead_edges.shape[1])
 
-
-
         # Get wrinkles at right and left of eyes, right eye is actually left based on face, but naming has been made on portrait face
         right_wrinkles_top_left = (self.right_eye[0] + (5 / 12) * self.distance_between_eyes, self.right_eye[1])
         right_wrinkles_bottom_right = (self.right_eye[0] + (5 / 12) * self.distance_between_eyes + (1 / 6) * self.distance_between_eyes, self.right_eye[1] + (1 / 4) * self.distance_between_eyes)
         right_eye_wrinkle_area = self.image[int(right_wrinkles_top_left[1]):int(right_wrinkles_bottom_right[1]), int(right_wrinkles_top_left[0]):int(right_wrinkles_bottom_right[0])]
         right_eye_wrinkle_edges = cv2.Canny(right_eye_wrinkle_area, 100, 200)
         right_eye_wrinkle_density = np.count_nonzero(right_eye_wrinkle_edges) / (right_eye_wrinkle_edges.shape[0] * right_eye_wrinkle_edges.shape[1])
-
-
-
 
         left_wrinkles_top_left = (self.left_eye[0] - (5 / 12) * self.distance_between_eyes - (1 / 6) * self.distance_between_eyes, self.left_eye[1])
         left_wrinkles_bottom_right = (self.left_eye[0] - (5 / 12) * self.distance_between_eyes, self.left_eye[1] + (1 / 4) * self.distance_between_eyes)
@@ -101,7 +123,6 @@ class FaceLandmarks:
         left_cheek_wrinkle_density = self.get_cheek_densities(self.left_eye)
         average_cheek_wrinkle_density = np.mean([right_cheek_wrinkle_density, left_cheek_wrinkle_density])
 
-        # Index is either 1 or -1 to multiply the ratio and make it +ve or -ve
         return [forehead_wrinkle_density, average_eye_wrinkle_density, average_cheek_wrinkle_density]
 
     def get_cheek_densities(self, eye):
@@ -110,5 +131,3 @@ class FaceLandmarks:
         cheek_wrinkle_area = self.image[int(cheek_top_left[1]):int(cheek_bottom_right[1]), int(cheek_top_left[0]):int(cheek_bottom_right[0])]
         cheek_wrinkle_edges = cv2.Canny(cheek_wrinkle_area, 100, 200)
         return np.count_nonzero(cheek_wrinkle_edges) / (cheek_wrinkle_edges.shape[0] * cheek_wrinkle_edges.shape[1])
-
-

@@ -12,7 +12,7 @@ from sklearn.model_selection import learning_curve
 import matplotlib.pyplot as plt
 import itertools
 from sklearn.metrics import confusion_matrix
-import data_plotting
+import helper_functions
 from keras.models import load_model
 
 

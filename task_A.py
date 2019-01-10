@@ -7,11 +7,14 @@ import numpy as np
 import itertools
 from PIL import Image
 
+import time
+start_time = time.time()
+
 def find_outliers(path):
     outliers = []
     for image_path in glob.glob(path):
+        print(image_path)
         image = face_recognition.load_image_file(image_path)
-        print(image.shape[::-1])
         face_locations = face_recognition.face_locations(image)
         if len(face_locations) == 0:
             outliers.append(int(image_path.split("/")[1].split(".png")[0]))
@@ -51,14 +54,26 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
     plt.xlabel('Predicted label')
     plt.tight_layout()
 
-
 path = "dataset/*.png"
 nature_images = find_outliers(path)
+
 y_true = [0 if i in constants.faces else 1 for i in range(1, 5001)]
 y_pred = [1 if i in constants.outliers else 0 for i in range(1, 5001)]
 
-class_names = ["faces", "nature"]
+class_names = ["Face images", "Outliers"]
 cnf_matrix = confusion_matrix(y_true, y_pred)
+print("--- %s seconds ---" % (time.time() - start_time))
 plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True, title='Normalized confusion matrix')
 
 plt.show()
+
+'''
+file_dir = ["dataset/", ".png"]
+for file_no in range(1, 5001):
+    file_name = str(file_no).join(file_dir)
+    image = face_recognition.load_image_file(file_name)
+    face_locations = face_recognition.face_locations(image)
+
+    if len(face_locations) == 0 and file_no in constants.faces:
+        print(file_no)
+'''

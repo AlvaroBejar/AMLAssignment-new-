@@ -4,6 +4,8 @@ from sklearn.metrics import accuracy_score
 import helper_functions
 from joblib import dump
 
+# Code used if features want to be extracted live
+
 '''
 file_dir = ["dataset/", ".png"]
 images = []
@@ -17,14 +19,16 @@ data = fe.get_multiple_features(["mouth"])
 
 def SVM(x_train_flattened, y_train, x_test_flattened):
     clf = svm.SVC(kernel='linear', probability=True)  # Creates SVM to train
-    clf.fit(x_train_flattened, y_train)
+    clf.fit(x_train_flattened, y_train)  # Fits model to data
     predicted = clf.predict(x_test_flattened)
     print(accuracy_score(y_test, predicted))
     return clf
 
+# Loads saved features and labels
 data = helper_functions.load_data("saved_features/emotion_recognition_features.txt")[0]
 y = helper_functions.get_labels_for_task("smiling")
 
+# Split data to train and test
 x_train, x_test, y_train, y_test = train_test_split(data, y, test_size=0.3)
 
 # Reformats data from 3d to 2d for x_train and x_test
@@ -34,17 +38,6 @@ x_train_flattened = x_train.reshape((nsamples_train, nx_train * ny_train))
 nsamples_test, nx_test, ny_test = x_test.shape
 x_test_flattened = x_test.reshape((nsamples_test, nx_test * ny_test))
 
-mod = SVM(x_train_flattened, y_train, x_test_flattened)
+mod = SVM(x_train_flattened, y_train, x_test_flattened)  # Train model
 
-dump(mod, "emotion_recognition_model.joblib")
-
-'''
-var = extract_features(["testing_dataset/", ".png"])
-ns, nx, ny = var.shape
-var_flattened = var.reshape((ns, nx * ny))
-
-scores = cross_val_score(clf, test, y, cv=5)
-print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-print(len(scores))
-print(scores)
-'''
+dump(mod, "emotion_recognition_model.joblib")  # Save model

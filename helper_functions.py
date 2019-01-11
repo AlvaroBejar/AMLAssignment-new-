@@ -6,6 +6,7 @@ import pandas as pd
 import constants
 import pickle
 
+# Plots learning curve for model
 def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
                         n_jobs=None, train_sizes=np.linspace(.1, 1.0, 5)):
     """
@@ -122,19 +123,23 @@ def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix'
     plt.tight_layout()
 
 
-# Returns an array with the labels needed for the specific classification task
+# Get labels for task
 def get_labels_for_task(column):
     labels = pd.read_csv('attribute_list.csv', skiprows=1)
     labels.columns = ["id", "hair_color", "eyeglasses", "smiling", "young", "human"]
-    labels.drop(labels.columns[0], axis=1, inplace=True)
-    return np.array([0 if val == -1 else 1 for i, val in enumerate(labels[column]) if i + 1 in constants.images])
+    labels.drop(labels.columns[0], axis=1, inplace=True)  # Drop heading row
+    if column == "hair_color":
+        return np.array([val for i, val in enumerate(labels[column]) if i + 1 in constants.images])
+    else:
+        return np.array([0 if val == -1 else 1 for i, val in enumerate(labels[column]) if i + 1 in constants.images])
 
+# Save variables to file
 def save_data(file_name, images):
     # For ease of access arrays were saved into separate files
     with open(file_name, "wb") as fp:  # Pickling
         pickle.dump(images, fp)
 
-
+# Load data from file
 def load_data(file_name):
     # Load data containing mouth features
     with open(file_name, "rb") as fp:  # Unpickling
